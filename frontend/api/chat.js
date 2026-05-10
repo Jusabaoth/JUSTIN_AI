@@ -8,6 +8,8 @@ let currentKeyIndex = 0;
 function getAI() {
   if (aiInstances.length === 0) return null;
   const instance = aiInstances[currentKeyIndex];
+  const maskedKey = apiKeys[currentKeyIndex].substring(0, 6) + '...';
+  console.log(`[KeyRotation] Using Key #${currentKeyIndex + 1} (${maskedKey})`);
   // Cycle to next key for the next request
   currentKeyIndex = (currentKeyIndex + 1) % aiInstances.length;
   return instance;
