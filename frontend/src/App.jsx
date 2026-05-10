@@ -6,7 +6,7 @@ import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
 import InputBar from './components/InputBar';
 
-const API_URL = 'http://localhost:3001';
+const API_URL = import.meta.env.DEV ? 'http://localhost:3001' : '';
 const STORAGE_KEY = 'justin_sessions';
 
 function generateId() {
