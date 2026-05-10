@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -15,7 +15,7 @@ app.use(express.json());
 
 // Initialize Gemini Instances for Rotation
 const apiKeys = (process.env.GEMINI_API_KEYS || '').split(',').map(k => k.trim()).filter(Boolean);
-const aiInstances = apiKeys.map(key => new GoogleGenAI({ apiKey: key }));
+const aiInstances = apiKeys.map(key => new GoogleGenerativeAI(key));
 let currentKeyIndex = 0;
 
 function getAI() {
@@ -40,18 +40,21 @@ app.post('/chat', async (req, res) => {
       return res.status(400).json({ error: 'Message is required.' });
     }
 
-    const ai = getAI();
-    if (!ai) {
+    const genAI = getAI();
+    if (!genAI) {
       return res.status(500).json({ error: 'Gemini API keys are not configured.' });
     }
 
     // Build conversation history for context
     const systemInstruction = `You are JUSTIN AI, a next-generation artificial intelligence assistant with a sleek, futuristic personality. You are knowledgeable, precise, and slightly poetic in your responses. You represent the pinnacle of human-AI collaboration. Respond in a helpful, intelligent, and slightly futuristic tone. Keep responses concise yet insightful unless asked to elaborate.`;
 
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-2.0-flash',
+      systemInstruction: systemInstruction 
+    });
+
     // Build contents array with history
     const contents = [];
-
-    // Add history messages
     for (const msg of history) {
       if (msg.role && msg.content) {
         contents.push({
@@ -67,11 +70,9 @@ app.post('/chat', async (req, res) => {
       parts: [{ text: message }],
     });
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+    const result = await model.generateContent({
       contents,
-      config: {
-        systemInstruction,
+      generationConfig: {
         temperature: 0.8,
         topK: 40,
         topP: 0.95,
@@ -79,7 +80,8 @@ app.post('/chat', async (req, res) => {
       },
     });
 
-    const reply = response.text;
+    const response = await result.response;
+    const reply = response.text();
 
     res.json({ reply });
   } catch (error) {
@@ -93,7 +95,7 @@ app.post('/chat', async (req, res) => {
       return res.status(429).json({ error: 'Rate limit exceeded. Please wait a moment and try again.' });
     }
 
-    res.status(500).json({ error: 'Failed to generate response. Please try again.' });
+    res.status(500).json({ error: 'Failed to generate response. ' + error.message });
   }
 });
 
