@@ -31,62 +31,82 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  try {
-    const { message, history = [] } = req.body;
+  const { message, history = [] } = req.body;
 
-    if (!message || typeof message !== 'string' || message.trim() === '') {
-      return res.status(400).json({ error: 'Message is required.' });
-    }
+  if (!message || typeof message !== 'string' || message.trim() === '') {
+    return res.status(400).json({ error: 'Message is required.' });
+  }
 
-    const genAI = getAI();
-    if (!genAI) {
+  let attempts = 0;
+  const maxAttempts = aiInstances.length || 1;
+  let lastError = null;
+
+  while (attempts < maxAttempts) {
+    const ai = getAI();
+    if (!ai) {
       return res.status(500).json({ error: 'Gemini API keys are not configured on Vercel.' });
     }
 
-    const systemInstruction = `You are JUSTIN AI, a next-generation artificial intelligence assistant with a sleek, futuristic personality. You are knowledgeable, precise, and slightly poetic in your responses. You represent the pinnacle of human-AI collaboration. Respond in a helpful, intelligent, and slightly futuristic tone. Keep responses concise yet insightful unless asked to elaborate.`;
+    try {
+      const systemInstruction = `You are JUSTIN AI, a next-generation artificial intelligence assistant with a sleek, futuristic personality. You are knowledgeable, precise, and slightly poetic in your responses. You represent the pinnacle of human-AI collaboration. Respond in a helpful, intelligent, and slightly futuristic tone. Keep responses concise yet insightful unless asked to elaborate.`;
 
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.0-flash',
-      systemInstruction: systemInstruction 
-    });
+      const model = ai.getGenerativeModel({ 
+        model: 'gemini-2.0-flash',
+        systemInstruction: systemInstruction 
+      });
 
-    const contents = [];
-    for (const msg of history) {
-      if (msg.role && msg.content) {
-        contents.push({
-          role: msg.role === 'user' ? 'user' : 'model',
-          parts: [{ text: msg.content }],
-        });
+      const contents = [];
+      for (const msg of history) {
+        if (msg.role && msg.content) {
+          contents.push({
+            role: msg.role === 'user' ? 'user' : 'model',
+            parts: [{ text: msg.content }],
+          });
+        }
       }
+
+      contents.push({
+        role: 'user',
+        parts: [{ text: message }],
+      });
+
+      const result = await model.generateContent({
+        contents,
+        generationConfig: {
+          temperature: 0.8,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 2048,
+        },
+      });
+
+      const response = await result.response;
+      const reply = response.text();
+
+      return res.status(200).json({ reply }); // Success!
+
+    } catch (error) {
+      lastError = error;
+      const isRateLimit = error.message?.includes('429') || error.status === 429 || error.message?.includes('quota');
+      const isInvalidKey = error.message?.includes('API_KEY_INVALID') || error.status === 400 || error.status === 401;
+      
+      if ((isRateLimit || isInvalidKey) && attempts < maxAttempts - 1) {
+        const reason = isRateLimit ? 'rate limited' : 'invalid';
+        console.warn(`[KeyRotation] Key #${(currentKeyIndex === 0 ? aiInstances.length : currentKeyIndex)} was ${reason}. Automatically trying next key... (Attempt ${attempts + 1}/${maxAttempts})`);
+        attempts++;
+        continue;
+      }
+      break;
     }
-
-    contents.push({
-      role: 'user',
-      parts: [{ text: message }],
-    });
-
-    const result = await model.generateContent({
-      contents,
-      generationConfig: {
-        temperature: 0.8,
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 2048,
-      },
-    });
-
-    const response = await result.response;
-    const reply = response.text();
-
-    res.status(200).json({ reply });
-  } catch (error) {
-    console.error('Gemini API Error:', error);
-    if (error.message?.includes('API_KEY_INVALID')) {
-      return res.status(401).json({ error: 'Invalid Gemini API key.' });
-    }
-    if (error.status === 429) {
-      return res.status(429).json({ error: 'Rate limit exceeded.' });
-    }
-    res.status(500).json({ error: 'Failed to generate response. ' + error.message });
   }
+
+  // Handle final error
+  console.error('Final Gemini API Error:', lastError);
+  if (lastError.message?.includes('API_KEY_INVALID')) {
+    return res.status(401).json({ error: 'Invalid Gemini API key.' });
+  }
+  if (lastError.status === 429 || lastError.message?.includes('quota')) {
+    return res.status(429).json({ error: 'All API keys are currently at their rate limit.' });
+  }
+  res.status(500).json({ error: 'Failed to generate response. ' + lastError.message });
 }
