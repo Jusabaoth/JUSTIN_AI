@@ -185,7 +185,7 @@ export default function App() {
         {/* Header */}
         <header className="chat-header">
           <div className="header-model">
-            <div className="model-badge">GEMINI 2.0 FLASH</div>
+            <div className="model-badge">GEMINI FLASH (LATEST)</div>
           </div>
           <div className="header-right">
             <div className="status-online">

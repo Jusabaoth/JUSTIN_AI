@@ -14,15 +14,18 @@ app.use(cors({
 app.use(express.json());
 
 // Initialize Gemini Instances for Rotation
-const apiKeys = (process.env.GEMINI_API_KEYS || '').split(',').map(k => k.trim()).filter(Boolean);
-const aiInstances = apiKeys.map(key => new GoogleGenerativeAI(key));
+const apiKeys = (process.env.GEMINI_API_KEYS || '')
+  .split(',')
+  .map(k => k.replace(/["']/g, '').trim()) // Remove any accidental quotes
+  .filter(Boolean);
+const aiInstances = apiKeys.map(key => new GoogleGenerativeAI(key)); // Defaults to v1beta
 let currentKeyIndex = 0;
 
 function getAI() {
   if (aiInstances.length === 0) return null;
   const instance = aiInstances[currentKeyIndex];
-  const maskedKey = apiKeys[currentKeyIndex].substring(0, 6) + '...';
-  console.log(`[KeyRotation] Using Key #${currentKeyIndex + 1} (${maskedKey})`);
+  const maskedKey = apiKeys[currentKeyIndex].substring(0, 6) + '...' + apiKeys[currentKeyIndex].substring(apiKeys[currentKeyIndex].length - 4);
+  console.log(`[KeyRotation] Request processing with Key #${currentKeyIndex + 1} (${maskedKey})`);
   // Cycle to next key for the next request
   currentKeyIndex = (currentKeyIndex + 1) % aiInstances.length;
   return instance;
@@ -55,7 +58,7 @@ app.post('/chat', async (req, res) => {
       const systemInstruction = `You are JUSTIN AI, a next-generation artificial intelligence assistant with a sleek, futuristic personality. You are knowledgeable, precise, and slightly poetic in your responses. You represent the pinnacle of human-AI collaboration. Respond in a helpful, intelligent, and slightly futuristic tone. Keep responses concise yet insightful unless asked to elaborate.`;
 
       const model = ai.getGenerativeModel({ 
-        model: 'gemini-2.0-flash',
+        model: 'gemini-flash-latest',
         systemInstruction: systemInstruction 
       });
 
@@ -93,9 +96,13 @@ app.post('/chat', async (req, res) => {
       lastError = error;
       const isRateLimit = error.message?.includes('429') || error.status === 429 || error.message?.includes('quota');
       const isInvalidKey = error.message?.includes('API_KEY_INVALID') || error.status === 400 || error.status === 401;
+      const isServiceBusy = error.status === 503 || error.message?.includes('503') || error.message?.includes('overloaded');
       
-      if ((isRateLimit || isInvalidKey) && attempts < maxAttempts - 1) {
-        const reason = isRateLimit ? 'rate limited' : 'invalid';
+      if ((isRateLimit || isInvalidKey || isServiceBusy) && attempts < maxAttempts - 1) {
+        let reason = 'rate limited';
+        if (isInvalidKey) reason = 'invalid';
+        if (isServiceBusy) reason = 'busy/overloaded';
+        
         console.warn(`[KeyRotation] Key #${(currentKeyIndex === 0 ? aiInstances.length : currentKeyIndex)} was ${reason}. Automatically trying next key... (Attempt ${attempts + 1}/${maxAttempts})`);
         attempts++;
         continue;
