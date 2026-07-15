@@ -2,7 +2,6 @@
 
 JUSTIN AI is a futuristic, sleek, and highly responsive chatbot powered by Google Gemini. It features a stunning glassmorphism UI, interactive AI orbs, and a persistent conversation history.
 
-![JUSTIN AI Demo](https://via.placeholder.com/1200x600?text=JUSTIN+AI+Interface+Preview)
 
 ## ✨ Features
 
@@ -69,10 +68,4 @@ The app will be available at `http://localhost:5173`.
 -   **Backend**: Node.js, Express, Google Generative AI SDK.
 -   **AI Model**: Google Gemini 2.5 Flash.
 
-## 📜 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ---
-
-Built with ❤️ by [Your Name]

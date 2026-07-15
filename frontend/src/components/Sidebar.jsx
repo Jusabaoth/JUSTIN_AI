@@ -43,9 +43,9 @@ export default function Sidebar({ sessions, activeId, onNewChat, onSelectChat, o
       {!isOpen && (
         <button className="sidebar-toggle external" onClick={onToggle} aria-label="Open sidebar">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="3" y1="12" x2="21" y2="12"/>
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <line x1="3" y1="18" x2="21" y2="18"/>
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
       )}
@@ -53,7 +53,7 @@ export default function Sidebar({ sessions, activeId, onNewChat, onSelectChat, o
       <motion.aside
         className={`sidebar ${isOpen ? 'open' : 'closed'}`}
         initial={false}
-        animate={{ 
+        animate={{
           x: isOpen ? 0 : (window.innerWidth <= 768 ? '-100%' : 0),
           width: isOpen ? '260px' : (window.innerWidth <= 768 ? '260px' : '0px'),
           opacity: isOpen ? 1 : (window.innerWidth <= 768 ? 1 : 0),
@@ -66,17 +66,16 @@ export default function Sidebar({ sessions, activeId, onNewChat, onSelectChat, o
           <div className="sidebar-logo">
             <div className="logo-icon-wrap">
               <svg viewBox="0 0 24 24">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
               </svg>
             </div>
             <div className="logo-text-group">
               <div className="logo-text">JUSTIN <span>AI</span></div>
-              <div className="logo-version">AI SYSTEM v2.5</div>
             </div>
           </div>
           <button className="close-sidebar-btn" onClick={onToggle} aria-label="Close sidebar">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M18 6L6 18M6 6l12 12"/>
+              <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
         </div>
@@ -89,8 +88,8 @@ export default function Sidebar({ sessions, activeId, onNewChat, onSelectChat, o
           whileTap={{ scale: 0.97 }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
           New Conversation
         </motion.button>
@@ -113,7 +112,7 @@ export default function Sidebar({ sessions, activeId, onNewChat, onSelectChat, o
                 onClick={() => onSelectChat(s.id)}
               >
                 <span className="history-icon">💬</span>
-                
+
                 {editingId === s.id ? (
                   <input
                     autoFocus
@@ -131,14 +130,14 @@ export default function Sidebar({ sessions, activeId, onNewChat, onSelectChat, o
                 <div className="history-actions">
                   <button className="action-btn" onClick={(e) => handleStartEdit(e, s)} title="Rename">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                      <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                     </svg>
                   </button>
                   <button className="action-btn delete" onClick={(e) => handleDelete(e, s.id)} title="Delete">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="3 6 5 6 21 6"/>
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                     </svg>
                   </button>
                 </div>
